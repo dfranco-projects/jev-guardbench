@@ -1,0 +1,59 @@
+# Counted run (HYPOTHESES.md, amendment 1). Kev-9B is the primary System One arm; Jev runs
+# only if a TypeSafe key is available. Sizes are per source, before the 70/30 test/dev split;
+# null means every row.
+#
+# Kev-9B runs on a rented GPU. Serve it there with
+#   uv run --extra serve python -m kev.serve --run jaredpalmer/kev-9b --port 8009
+# and forward the port (ssh -L 8009:127.0.0.1:8009 <gpu-host>), so every guard is reached over
+# the network. Name the GPU and region in the report, and save `GET /v1/models`: Kev answers
+# with the alias `kev-latest`, so that listing is the only record of which checkpoint ran.
+seed: 0
+splits: [dev, test]
+concurrency: [1, 16]
+results_dir: results/full
+manifest: manifests/full.jsonl  # committed: the frozen row set, ids + labels + text hashes
+
+sources:
+  deepset: null
+  in_the_wild: 1500
+  aegis2_prompts: 1500
+  xstest: null
+  aegis2_responses: 1500
+  beavertails: 1500
+  ai4privacy: 1500
+
+guards:
+  kev-9b:
+    type: systemone
+    model: kev-latest
+    base_url: http://127.0.0.1:8009
+    api_key: local
+  kev-9b-decomposed:
+    type: systemone
+    model: kev-latest
+    base_url: http://127.0.0.1:8009
+    api_key: local
+    decompose: true
+  jev:
+    type: systemone
+    model: jev-1.13.0
+    input_per_mtok: 0.042
+    output_per_mtok: 0
+  jev-decomposed:
+    type: systemone
+    model: jev-1.13.0
+    input_per_mtok: 0.042
+    output_per_mtok: 0
+    decompose: true
+  gemini-flash:
+    type: gemini
+    model: gemini-3.5-flash
+  claude-haiku:
+    type: claude
+    model: claude-haiku-4-5
+  kev-9b-then-gemini:
+    type: cascade
+    fast: kev-9b
+    slow: gemini-flash
+
+run: [kev-9b, kev-9b-decomposed, gemini-flash, claude-haiku, kev-9b-then-gemini]

@@ -23,7 +23,7 @@ guards:
     output_per_mtok: 0
   jev:
     type: systemone
-    model: jev-latest
+    model: jev-1.13.0  # pinned: jev-latest moves between releases
     input_per_mtok: 0.042
     output_per_mtok: 0
   gemini-flash:
