@@ -28,7 +28,7 @@ class Config:
 
 
 def load_config(path: Path) -> Config:
-    raw = yaml.safe_load(path.read_text())
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     raw["results_dir"] = Path(raw.get("results_dir", "results"))
     if raw.get("manifest"):
         raw["manifest"] = Path(raw["manifest"])
@@ -75,9 +75,9 @@ def freeze_or_verify(path: Path, rows: list[Row]) -> bool:
     entries = [manifest_entry(r) for r in rows]
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("".join(json.dumps(e) + "\n" for e in entries))
+        path.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
         return True
-    frozen = [json.loads(line) for line in path.read_text().splitlines()]
+    frozen = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
     if frozen != entries:
         changed = len({json.dumps(e) for e in entries} ^ {json.dumps(e) for e in frozen})
         raise ValueError(

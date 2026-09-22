@@ -35,7 +35,7 @@ def cmd_freeze(args: argparse.Namespace) -> None:
 def cmd_report(args: argparse.Namespace) -> None:
     text = render(load_all(args.results), baseline=args.baseline)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(text)
+    args.out.write_text(text, encoding="utf-8")
     print(text)
 
 

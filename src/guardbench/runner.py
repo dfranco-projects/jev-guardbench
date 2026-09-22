@@ -23,7 +23,7 @@ def read_results(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     latest: dict[str, dict[str, Any]] = {}
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         for line in f:
             rec = json.loads(line)
             latest[rec["id"]] = rec
@@ -40,7 +40,7 @@ async def run_guard(
     sem = asyncio.Semaphore(concurrency)
     failed = 0
 
-    with out.open("a") as f:
+    with out.open("a", encoding="utf-8") as f:
 
         async def one(row: Row) -> None:
             nonlocal failed
