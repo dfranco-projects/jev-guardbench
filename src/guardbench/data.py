@@ -158,8 +158,19 @@ def map_ai4privacy(rec: Mapping[str, Any]) -> Row:
 # --- loaders ----------------------------------------------------------------------------------
 
 
+# Dataset commits on the Hugging Face Hub, pinned so a run always reads the same bytes.
+REVISIONS = {
+    "deepset/prompt-injections": "4f61ecb038e9c3fb77e21034b22511b523772cdd",
+    "TrustAIRLab/in-the-wild-jailbreak-prompts": "a10aab8eff1c73165a442d4464dce192bd28b9c5",
+    "nvidia/Aegis-AI-Content-Safety-Dataset-2.0": "d86bb8bedff51d25ac834ab7838f1cc61acb7a2c",
+    "PKU-Alignment/BeaverTails": "8401fe609d288129cc684a9b3be6a93e41cfe678",
+    "Paul/XSTest": "f600c994b256f12867dfa5b3eb3d545a3e62f8b5",
+    "ai4privacy/open-pii-masking-500k-ai4privacy": "506996d625ed970a0063432daf6007cf4a3a48e3",
+}
+
+
 def _load(name: str, split: str, config: str | None = None) -> Iterator[Mapping[str, Any]]:
-    yield from load_dataset(name, config, split=split)  # type: ignore[misc]
+    yield from load_dataset(name, config, split=split, revision=REVISIONS[name])  # type: ignore[misc]
 
 
 def load_deepset() -> Iterator[Row]:

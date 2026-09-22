@@ -3,6 +3,8 @@ import math
 import pytest
 
 from guardbench import data, metrics
+from guardbench.config import freeze_or_verify
+from guardbench.data import Row
 
 
 def test_split_is_stable_and_roughly_proportional():
@@ -76,3 +78,25 @@ def test_bootstrap_ci_brackets_the_statistic():
     values = [0.0] * 50 + [1.0] * 50
     lo, hi = metrics.bootstrap_ci(lambda idx: sum(values[i] for i in idx) / len(idx), 100)
     assert lo < 0.5 < hi
+
+
+def test_manifest_is_written_once_then_verified(tmp_path):
+    path = tmp_path / "set.jsonl"
+    rows = [Row("a", "pii", "src", "hello", label=True), Row("b", "pii", "src", "hi", label=False)]
+    assert freeze_or_verify(path, rows) is True
+    assert freeze_or_verify(path, rows) is False
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        Row("a", "pii", "src", "hello, edited", label=True),
+        Row("a", "pii", "src", "hello", label=False),
+        Row("a", "pii", "src", "hello", label=True, context={"user_message": "new"}),
+    ],
+)
+def test_manifest_rejects_changed_text_label_or_context(tmp_path, changed):
+    path = tmp_path / "set.jsonl"
+    freeze_or_verify(path, [Row("a", "pii", "src", "hello", label=True)])
+    with pytest.raises(ValueError, match="differ"):
+        freeze_or_verify(path, [changed])
