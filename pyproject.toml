@@ -16,12 +16,18 @@ dependencies = [
     "typesafe-sdk>=0.7.1",
 ]
 
+[project.optional-dependencies]
+adk = [
+    "google-adk>=2.9.2",
+]
+
 [build-system]
 requires = ["uv_build>=0.12.17,<0.13.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "google-adk>=2.9.2",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",

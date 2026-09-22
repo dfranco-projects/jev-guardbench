@@ -1,5 +1,6 @@
 """TypeSafe System One guard. Serves both hosted Jev and a local Kev server (same API)."""
 
+from collections.abc import Sequence
 from time import perf_counter
 
 import httpx2
@@ -7,8 +8,6 @@ from typesafe_sdk import AsyncTypeSafeClient, Noul, NoulAnswer, RetryPolicy, Typ
 
 from guardbench.guards.base import Context, Verdict, elapsed_ms, token_cost
 from guardbench.tasks import Task
-
-QUESTION_KEY = "violation"
 
 
 def build_state(text: str, context: Context) -> str | dict[str, str]:
@@ -50,22 +49,35 @@ class SystemOneGuard:
         )
 
     async def check(self, text: str, task: Task, context: Context = None) -> Verdict:
+        return (await self.check_many(text, [task], context))[0]
+
+    async def check_many(
+        self, text: str, tasks: Sequence[Task], context: Context = None
+    ) -> list[Verdict]:
+        """All tasks as questions in one request: the state is read once. Each verdict carries
+        the request's latency and an equal share of its cost."""
         start = perf_counter()
         try:
             resp = await self._client.system_one(
-                build_state(text, context), {QUESTION_KEY: build_question(task)}
+                build_state(text, context), {t.name: build_question(t) for t in tasks}
             )
         except TypeSafeError as e:
-            return Verdict(
+            error = Verdict(
                 flagged=None, latency_ms=elapsed_ms(start), error=f"{type(e).__name__}: {e}"
             )
+            return [error] * len(tasks)
         latency = elapsed_ms(start)
-        answer = resp.answers[QUESTION_KEY]
-        assert isinstance(answer, NoulAnswer)
         cost = token_cost(resp.usage.input_tokens, resp.usage.output_tokens, *self._prices)
-        return Verdict(
-            flagged=answer.noul >= self.threshold,
-            latency_ms=latency,
-            prob=answer.noul,
-            cost_usd=cost,
-        )
+        verdicts = []
+        for t in tasks:
+            answer = resp.answers[t.name]
+            assert isinstance(answer, NoulAnswer)
+            verdicts.append(
+                Verdict(
+                    flagged=answer.noul >= self.threshold,
+                    latency_ms=latency,
+                    prob=answer.noul,
+                    cost_usd=cost / len(tasks) if cost is not None else None,
+                )
+            )
+        return verdicts

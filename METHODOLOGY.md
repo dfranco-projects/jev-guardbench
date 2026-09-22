@@ -32,3 +32,17 @@ Every guard receives the same policy text (`src/guardbench/tasks.py`):
 - **Errors:** excluded from quality metrics and reported as an error rate.
 - **Threshold tuning:** thresholds are tuned on dev (best F1) and applied unchanged to test.
 - **Intervals:** 95% bootstrap intervals with 1,000 resamples. Guard-vs-guard differences use paired resamples of the same rows.
+
+## In-agent measurement (H3)
+
+`src/guardbench/adk.py` runs a guard inside google-adk 2.9.2 callbacks:
+
+| Callback | Screens | Default tasks |
+|---|---|---|
+| `before_agent` | the user's message, once per invocation | prompt_injection, harmful_request, pii |
+| `before_model` | tool results the model is about to read | prompt_injection |
+| `after_model` | the final model text (partial stream chunks skipped) | harmful_response, pii |
+
+Checks in one stage run as **one batched request** for System One guards (`check_many`), which is how the API is meant to be used. For judges they run as **parallel single-question calls**, the usual judge deployment. Either way, the stage latency is what the user waits for. A failed check lets the content through unless `fail_closed=True`.
+
+`examples/adk_latency.py` times the same messages with no guard and with each guard, then reports the median latency added per turn. With `--agent-model scripted`, the model replies instantly, so the added latency is the guard alone.
