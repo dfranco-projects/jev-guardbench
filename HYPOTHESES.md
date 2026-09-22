@@ -55,3 +55,16 @@ The cascade's F1 is not lower than the best judge's, using the same non-inferior
 - **Policies and labels are ours.** Dataset labels were mapped onto them, for example the strong-PII rule described in `METHODOLOGY.md`. Results say how well each guard follows *these* policies.
 - **Possible training contamination:** public datasets may be in any model's training data.
 - **Kev does not stand in for Jev.** Conclusions about Jev need Jev runs.
+
+## Amendment 1 (2026-09-22, before any counted run)
+
+TypeSafe paused new signups, so no Jev key can be obtained, and H1 as first written could not be decided. The only results so far are Kev-0.8B smoke runs, which are not evidence. This amendment was made before any counted run and replaces the matching rules above.
+
+- **Primary System One guard: `kev-9b`**, self-hosted on a rented GPU. The GPU model and region are named in the report. It is reached through a forwarded port, so it pays a network hop like the hosted judges do.
+- **H1, H2 and H4 are judged on `kev-9b`.** The H1 "Scope" line above no longer applies. Hosted `jev` (pinned to `jev-1.13.0`) is a secondary arm, reported with the same rules when a key is available. Results for one model do not carry over to the other.
+- **Secondary arm, `*-decomposed`:** each policy is asked as single-condition Nouls (`Task.parts`), and a row is flagged by the highest part probability. TypeSafe's documentation recommends this style. It gets the same H2 rule, reported separately. The primary arm keeps the shared single-question policy.
+- **Framing for System One:** the question names the judged field (`content`) when context is present, and says to treat it as data. This mirrors the data instruction the judges already get.
+- Every result records the model version that answered, as reported by the provider.
+- **H2 task count:** `prompt_leakage` has no data yet. Until it does, H2 is supported only if **all 4 tasks with data pass**. The "4 of 5" rule applies once `prompt_leakage` has data frozen in the manifest.
+- **PII policy narrowed to what the labels measure.** ai4privacy tags dates without saying whether they are birth dates, and has no credential spans, so "date of birth" and "credentials" were dropped from the `pii` policy. The policy now lists the same identifiers as the label rule in `METHODOLOGY.md`.
+- **Frozen set:** dataset commits are pinned (`data.REVISIONS`). The counted rows are listed in `manifests/full.jsonl` (id, task, label, hash of text and context). A run whose rows differ from the manifest stops with an error.

@@ -10,7 +10,9 @@
 | `pii` | both | [ai4privacy open-pii-masking-500k](https://huggingface.co/datasets/ai4privacy/open-pii-masking-500k-ai4privacy), validation split (see dataset license) |
 | `prompt_leakage` | after model | synthetic (planned) |
 
-This repository contains no dataset content. Rows are downloaded from Hugging Face at run time.
+This repository contains no dataset content, because some licences (BeaverTails is CC-BY-NC, ai4privacy has its own terms) don't allow redistribution. Rows are downloaded from Hugging Face at run time, at the commits pinned in `data.REVISIONS`, and cached in `~/.cache/huggingface`.
+
+The counted set is frozen in `manifests/full.jsonl`: one line per row with id, task, label and a SHA-256 of the text and context, and no content. `guardbench freeze <config>` writes the manifest the first time and checks it afterwards. `guardbench run` checks it too, and stops if any row, label or text has changed.
 
 ### Label mapping decisions
 
@@ -22,7 +24,8 @@ This repository contains no dataset content. Rows are downloaded from Hugging Fa
 
 Every guard receives the same policy text (`src/guardbench/tasks.py`):
 
-- **System One (Jev/Kev):** the policy is sent as one `noul` question (`instructions` = question, `criteria.true` / `criteria.false` = violation / allowed). Structured state is sent as `{...context, "text": ...}`.
+- **System One (Jev/Kev):** the policy is sent as one `noul` question (`instructions` = question, `criteria.true` / `criteria.false` = violation / allowed). Structured state is sent as `{...context, "content": ...}`, and the question names `content` as the field to judge. The instructions also say to treat the content as data, since System One reads state literally and does not treat it as hostile by default ([Jev 1.13 jaggedness](https://docs.typesafe.ai/model-jaggedness/jev-1.13)).
+- **System One, decomposed (secondary arm):** each policy is split into single-condition questions (`Task.parts`) asked as separate Nouls in the same request, without criteria. The row's probability is the highest part probability. TypeSafe recommends one judgment per Noul, combined in code.
 - **LLM judges:** the policy goes in the system prompt, with content in `<content>` tags and an instruction to treat it as data. The output is constrained to JSON `{"decision": "ALLOW" | "BLOCK"}` through structured output.
 - **Provider refusals:** when a provider's own safety filter stops the judge, the row counts as BLOCK (`note=provider_block`), which is what a production callback would do.
 
@@ -30,6 +33,7 @@ Every guard receives the same policy text (`src/guardbench/tasks.py`):
 
 - **Latency:** client-side wall clock for one attempt. SDK retries are disabled. Failed rows are recorded with `error` and retried on the next run, and only the latest record per row counts.
 - **Errors:** excluded from quality metrics and reported as an error rate.
+- **Model version:** every record stores the version the provider reports (`model`). Hosted Jev is pinned to `jev-1.13.0` rather than the moving `jev-latest` alias.
 - **Threshold tuning:** thresholds are tuned on dev (best F1) and applied unchanged to test.
 - **Intervals:** 95% bootstrap intervals with 1,000 resamples. Guard-vs-guard differences use paired resamples of the same rows.
 
