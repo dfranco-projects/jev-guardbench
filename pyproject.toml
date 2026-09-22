@@ -1,7 +1,7 @@
 [project]
 name = "guardbench"
 version = "0.1.0"
-description = "Add your description here"
+description = "Benchmark System One models (Jev, Kev) against LLM judges for agent guardrail callbacks"
 readme = "README.md"
 authors = [
     { name = "Daniel Franco", email = "daniel.franco.inbox@gmail.com" }
