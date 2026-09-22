@@ -10,7 +10,8 @@ Context = Mapping[str, str] | None
 
 @dataclass(frozen=True)
 class Verdict:
-    """One guard decision. `flagged` is None when the call failed."""
+    """One guard decision. `flagged` is None when the call failed. `model` is the version the
+    provider reports, since aliases such as `jev-latest` move between releases."""
 
     flagged: bool | None
     latency_ms: float
@@ -19,6 +20,7 @@ class Verdict:
     error: str | None = None
     note: str | None = None
     escalated: bool = False
+    model: str | None = None
 
 
 class Guard(Protocol):

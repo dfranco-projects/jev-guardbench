@@ -99,12 +99,24 @@ class GeminiJudge:
         )
         if not resp.text:
             # The provider's own safety filter stopped the judge; a production guard would block.
-            return Verdict(flagged=True, latency_ms=latency, cost_usd=cost, note="provider_block")
+            return Verdict(
+                flagged=True,
+                latency_ms=latency,
+                cost_usd=cost,
+                note="provider_block",
+                model=resp.model_version,
+            )
         try:
             flagged = parse_decision(resp.text)
         except ValueError as e:
-            return Verdict(flagged=None, latency_ms=latency, cost_usd=cost, error=f"parse: {e}")
-        return Verdict(flagged=flagged, latency_ms=latency, cost_usd=cost)
+            return Verdict(
+                flagged=None,
+                latency_ms=latency,
+                cost_usd=cost,
+                error=f"parse: {e}",
+                model=resp.model_version,
+            )
+        return Verdict(flagged=flagged, latency_ms=latency, cost_usd=cost, model=resp.model_version)
 
 
 class ClaudeJudge:
@@ -140,10 +152,22 @@ class ClaudeJudge:
         latency = elapsed_ms(start)
         cost = token_cost(resp.usage.input_tokens, resp.usage.output_tokens, *self._prices)
         if resp.stop_reason == "refusal":
-            return Verdict(flagged=True, latency_ms=latency, cost_usd=cost, note="provider_block")
+            return Verdict(
+                flagged=True,
+                latency_ms=latency,
+                cost_usd=cost,
+                note="provider_block",
+                model=resp.model,
+            )
         raw = next((b.text for b in resp.content if b.type == "text"), "")
         try:
             flagged = parse_decision(raw)
         except ValueError as e:
-            return Verdict(flagged=None, latency_ms=latency, cost_usd=cost, error=f"parse: {e}")
-        return Verdict(flagged=flagged, latency_ms=latency, cost_usd=cost)
+            return Verdict(
+                flagged=None,
+                latency_ms=latency,
+                cost_usd=cost,
+                error=f"parse: {e}",
+                model=resp.model,
+            )
+        return Verdict(flagged=flagged, latency_ms=latency, cost_usd=cost, model=resp.model)
