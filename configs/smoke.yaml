@@ -1,0 +1,40 @@
+# Small run to check the pipeline end to end: 50 rows per source, both splits.
+seed: 0
+splits: [dev, test]
+concurrency: [1]
+results_dir: results/smoke
+
+sources:
+  deepset: 50
+  in_the_wild: 50
+  aegis2_prompts: 50
+  xstest: 50
+  aegis2_responses: 50
+  beavertails: 50
+  ai4privacy: 50
+
+guards:
+  kev-0.8b:
+    type: systemone
+    model: kev-latest
+    base_url: http://127.0.0.1:8009
+    api_key: local
+    input_per_mtok: 0
+    output_per_mtok: 0
+  jev:
+    type: systemone
+    model: jev-latest
+    input_per_mtok: 0.042
+    output_per_mtok: 0
+  gemini-flash:
+    type: gemini
+    model: gemini-3.5-flash
+  claude-haiku:
+    type: claude
+    model: claude-haiku-4-5
+  kev-then-gemini:
+    type: cascade
+    fast: kev-0.8b
+    slow: gemini-flash
+
+run: [kev-0.8b]
