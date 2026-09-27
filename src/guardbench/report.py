@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 
 from guardbench import metrics
+from guardbench.guards.cascade import UNSURE_BAND
 from guardbench.runner import read_results
 
 Rec = dict[str, Any]
@@ -42,6 +43,15 @@ def summarise(recs: list[Rec]) -> dict[str, Any]:
         probs = [r["prob"] for r in ok]
         out["auroc"] = metrics.auroc(labels, probs)
         out["ece"] = metrics.ece(labels, probs)
+        # Noul answers carry no separate confidence: the probability is the confidence. Rows
+        # outside the unsure band are the ones a callback could act on without a fallback.
+        sure = [i for i, p in enumerate(probs) if not UNSURE_BAND[0] < p < UNSURE_BAND[1]]
+        out["coverage"] = len(sure) / len(probs)
+        out["f1_sure"] = (
+            metrics.f1([labels[i] for i in sure], [preds[i] for i in sure])
+            if sure
+            else float("nan")
+        )
         dev = [r for r in recs if r["split"] == "dev" and r["error"] is None]
         if dev:
             t = metrics.best_f1_threshold([r["label"] for r in dev], [r["prob"] for r in dev])
@@ -97,6 +107,8 @@ def render(recs: list[Rec], baseline: str | None = None) -> str:
         ("FPR", "fpr"),
         ("AUROC", "auroc"),
         ("ECE", "ece"),
+        ("cover.", "coverage"),
+        ("F1 sure", "f1_sure"),
         ("p50 ms", "p50_ms"),
         ("p95 ms", "p95_ms"),
         ("$/1k", "usd_per_1k"),

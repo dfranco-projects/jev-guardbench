@@ -5,9 +5,21 @@ from dataclasses import replace
 from guardbench.guards.base import Context, Guard, Verdict
 from guardbench.tasks import Task
 
+# A System One probability inside this band is treated as unsure: the cascade escalates it, and
+# the report counts it as not decided with confidence.
+UNSURE_BAND = (0.2, 0.8)
+
 
 class CascadeGuard:
-    def __init__(self, name: str, fast: Guard, slow: Guard, *, low: float = 0.2, high: float = 0.8):
+    def __init__(
+        self,
+        name: str,
+        fast: Guard,
+        slow: Guard,
+        *,
+        low: float = UNSURE_BAND[0],
+        high: float = UNSURE_BAND[1],
+    ):
         self.name = name
         self.fast = fast
         self.slow = slow

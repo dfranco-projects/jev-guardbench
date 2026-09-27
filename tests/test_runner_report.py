@@ -49,6 +49,7 @@ async def test_report_scores_a_perfect_guard(tmp_path: Path):
     assert s["n"] > 0
     assert s["f1"] == 1.0
     assert s["auroc"] == 1.0
+    assert s["coverage"] == 1.0
     assert s["error_rate"] == 0.0
 
 
@@ -62,3 +63,25 @@ async def test_paired_diff_is_zero_for_identical_guards(tmp_path: Path):
     text = render(a + b, baseline="b")
     assert "## pii" in text
     assert "Paired F1 difference vs `b`" in text
+
+
+def test_coverage_counts_only_rows_outside_the_unsure_band():
+    recs = [
+        {
+            "id": str(i),
+            "split": "test",
+            "error": None,
+            "label": label,
+            "flagged": p >= 0.5,
+            "prob": p,
+            "latency_ms": 1.0,
+            "cost_usd": 0.0,
+            "escalated": False,
+            "note": None,
+        }
+        for i, (label, p) in enumerate([(True, 0.9), (False, 0.1), (True, 0.3), (False, 0.6)])
+    ]
+    s = summarise(recs)
+    assert s["coverage"] == 0.5
+    assert s["f1_sure"] == 1.0
+    assert s["f1"] < 1.0
