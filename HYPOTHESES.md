@@ -68,3 +68,12 @@ TypeSafe paused new signups, so no Jev key can be obtained, and H1 as first writ
 - **H2 task count:** `prompt_leakage` has no data yet. Until it does, H2 is supported only if **all 4 tasks with data pass**. The "4 of 5" rule applies once `prompt_leakage` has data frozen in the manifest.
 - **PII policy narrowed to what the labels measure.** ai4privacy tags dates without saying whether they are birth dates, and has no credential spans, so "date of birth" and "credentials" were dropped from the `pii` policy. The policy now lists the same identifiers as the label rule in `METHODOLOGY.md`.
 - **Frozen set:** dataset commits are pinned (`data.REVISIONS`). The counted rows are listed in `manifests/full.jsonl` (id, task, label, hash of text and context). A run whose rows differ from the manifest stops with an error.
+
+## Amendment 2 (2026-09-27, before any counted run)
+
+A Jev key is now available. This replaces the Kev-related rules in amendment 1. Nothing has been run for the record yet: the only results are still Kev-0.8B smoke runs.
+
+- **The System One guard is hosted `jev`, pinned to `jev-1.13.0`.** H1–H4 are judged on it, as in the original scope. Kev is dropped from the hypotheses. It remains usable for smoke tests, since it serves the same API.
+- **Still in force from amendment 1:** the decomposed arm (now `jev-decomposed`), the System One framing, recording the model version, the H2 task count, the narrowed PII policy, and the frozen set.
+- **Confidence:** a Noul answer has no separate confidence value; the probability is the confidence ([TypeSafe docs](https://docs.typesafe.ai/primitives/noul)). Besides the threshold metrics, the report gives **coverage**, the share of rows with a probability outside (0.2, 0.8), and **F1 on those rows**. This is the same band the cascade escalates. Both are reported, not tested.
+- **H1 concurrency is 1 and 4, not 1 and 16.** Jev allows 1,200 requests per minute ([models](https://docs.typesafe.ai/models)). Sixteen requests in flight at about 0.4 s each would exceed that, so the 16-in-flight latency would measure rate limiting, not Jev. Four in flight stays under the limit. The judges use the same levels.
