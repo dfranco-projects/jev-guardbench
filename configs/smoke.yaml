@@ -28,7 +28,7 @@ guards:
     output_per_mtok: 0
   gemini-flash:
     type: gemini
-    model: gemini-3.5-flash
+    model: gemini-3.8-flash
   claude-haiku:
     type: claude
     model: claude-haiku-4-5

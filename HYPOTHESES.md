@@ -77,3 +77,10 @@ A Jev key is now available. This replaces the Kev-related rules in amendment 1. 
 - **Still in force from amendment 1:** the decomposed arm (now `jev-decomposed`), the System One framing, recording the model version, the H2 task count, the narrowed PII policy, and the frozen set.
 - **Confidence:** a Noul answer has no separate confidence value; the probability is the confidence ([TypeSafe docs](https://docs.typesafe.ai/primitives/noul)). Besides the threshold metrics, the report gives **coverage**, the share of rows with a probability outside (0.2, 0.8), and **F1 on those rows**. This is the same band the cascade escalates. Both are reported, not tested.
 - **H1 concurrency is 1 and 4, not 1 and 16.** Jev allows 1,200 requests per minute ([models](https://docs.typesafe.ai/models)). Sixteen requests in flight at about 0.4 s each would exceed that, so the 16-in-flight latency would measure rate limiting, not Jev. Four in flight stays under the limit. The judges use the same levels.
+
+## Amendment 3 (2026-10-02, before any counted run)
+
+Nothing has been run for the record yet.
+
+- **The Gemini judge is `gemini-3.8-flash`, not Gemini 3.5 Flash.** 3.8 Flash is the newest Flash model and costs half as much ($0.75 input, $3.75 output per million tokens until 2026-12-31, [pricing](https://ai.google.dev/gemini-api/docs/pricing)). A newer judge is the harder baseline for H2. Minimal thinking and the JSON output are unchanged, and the guard keeps the name `gemini-flash`.
+- The counted run is planned before 2027-01-01, when that price doubles. Cost is reported at the price in force on the run date.

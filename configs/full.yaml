@@ -29,7 +29,9 @@ guards:
     decompose: true
   gemini-flash:
     type: gemini
-    model: gemini-3.5-flash
+    model: gemini-3.8-flash
+    input_per_mtok: 0.75  # until 2026-12-31, then 1.50
+    output_per_mtok: 3.75  # thinking billed as output; 7.50 from 2027
   claude-haiku:
     type: claude
     model: claude-haiku-4-5
