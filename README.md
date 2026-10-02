@@ -13,10 +13,8 @@ The counted run uses hosted **Jev**, pinned to `jev-1.13.0` ([amendment 2](HYPOT
 uv sync
 uv run pytest
 
-# guard credentials (only what you use)
-export TYPESAFE_API_KEY=...        # hosted Jev
-export ANTHROPIC_API_KEY=...       # Claude judge
-export GOOGLE_API_KEY=...          # Gemini judge (or GOOGLE_GENAI_USE_VERTEXAI=true + ADC)
+# guard credentials (only what you use), loaded by direnv
+cp .envrc.example .envrc && $EDITOR .envrc && direnv allow
 
 uv run python -m guardbench freeze configs/full.yaml   # checks rows against manifests/full.jsonl
 uv run python -m guardbench run configs/smoke.yaml --guards jev,gemini-flash

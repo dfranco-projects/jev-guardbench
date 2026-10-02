@@ -12,3 +12,4 @@ wheels/
 # benchmark outputs
 results/
 .env
+.envrc
