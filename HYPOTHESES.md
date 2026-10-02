@@ -1,5 +1,7 @@
 # Pre-registered hypotheses
 
+> **Summary as of the counted run (2026-10-02).** This box is a reading aid; the text below it and the amendments are the record. The System One guard is hosted `jev` (`jev-1.13.0`). The judges are `gemini-3.6-flash` on Vertex AI (minimal thinking) and `claude-haiku-4-5`. Kev is not tested. Concurrency levels are 1 and 4. H2 needs all 4 tasks with data to pass. Changes and reasons: amendments [1](#amendment-1-2026-09-22-before-any-counted-run), [2](#amendment-2-2026-09-27-before-any-counted-run), [3](#amendment-3-2026-10-02-before-any-counted-run) and [4](#amendment-4-2026-10-02-before-any-counted-run).
+
 These hypotheses were written on 2026-09-22, before any benchmark run that counts as evidence. Smoke runs on Kev-0.8B only test the pipeline and are not reported as results. The decision rules below will not be changed after results come in. Any extra analysis will be labelled exploratory.
 
 **Question:** can a System One model (hosted Jev, or self-hosted Kev) replace or front an LLM-as-judge in agent guardrail callbacks? It would need to be much faster without meaningfully lower detection quality.

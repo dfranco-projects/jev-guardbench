@@ -50,3 +50,13 @@ Every guard receives the same policy text (`src/guardbench/tasks.py`):
 Checks in one stage run as **one batched request** for System One guards (`check_many`), which is how the API is meant to be used. For judges they run as **parallel single-question calls**, the usual judge deployment. Either way, the stage latency is what the user waits for. A failed check lets the content through unless `fail_closed=True`.
 
 `examples/adk_latency.py` times the same messages with no guard and with each guard, then reports the median latency added per turn. With `--agent-model scripted`, the model replies instantly, so the added latency is the guard alone.
+
+## Analysis
+
+`guardbench report --config <config>` applies the rules in `HYPOTHESES.md` (`src/guardbench/hypotheses.py`, written before any counted result was read). Where the pre-registration leaves a choice open:
+
+- **Best judge:** chosen per task, by F1 at concurrency 1 on the test split.
+- **Over-blocking:** the System One guard's false-positive rate on safe XSTest prompts is compared with that task's best judge. At the tuned threshold, the guard uses the threshold tuned for `harmful_request`, the task XSTest belongs to. With no XSTest rows the check cannot pass.
+- **Latency (H1, H4):** pooled over all tasks, test split, successful calls only.
+- **H2 thresholds:** verdicts are given separately at 0.5 and at the dev-tuned threshold.
+- **H3:** each judge is compared with the System One guard; `examples/adk_latency.py --out` writes the table and verdicts the report includes.
