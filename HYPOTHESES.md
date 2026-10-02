@@ -84,3 +84,8 @@ Nothing has been run for the record yet.
 
 - **The Gemini judge is `gemini-3.8-flash`, not Gemini 3.5 Flash.** 3.8 Flash is the newest Flash model and costs half as much ($0.75 input, $3.75 output per million tokens until 2026-12-31, [pricing](https://ai.google.dev/gemini-api/docs/pricing)). A newer judge is the harder baseline for H2. Minimal thinking and the JSON output are unchanged, and the guard keeps the name `gemini-flash`.
 - The counted run is planned before 2027-01-01, when that price doubles. Cost is reported at the price in force on the run date.
+
+## Amendment 4 (2026-10-02, before any counted run)
+
+- **The Gemini judge is `gemini-3.6-flash`, not `gemini-3.8-flash`.** In credential checks, 3.8 Flash rejected minimal thinking ("Thinking level MINIMAL is not supported for this model"). At its lowest accepted level it took 5–9 s per call or failed with 503/504. 3.6 Flash accepts minimal thinking, which keeps the judge as pre-registered, and costs the same. Everything else in amendment 3 still applies.
+- **The Gemini judge is called through Vertex AI at location `global`**. The EU regions tested (`europe-southwest1`, `europe-west1`) do not serve 3.6 Flash.
