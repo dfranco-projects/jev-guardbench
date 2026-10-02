@@ -3,6 +3,7 @@ rows that already have a successful result are skipped, failed rows are retried.
 
 import asyncio
 import json
+import sys
 import time
 from collections.abc import Iterable
 from dataclasses import asdict
@@ -19,13 +20,18 @@ def results_path(results_dir: Path, guard: str, concurrency: int) -> Path:
 
 
 def read_results(path: Path) -> list[dict[str, Any]]:
-    """Latest record per row id: a successful retry replaces an earlier failure."""
+    """Latest record per row id: a successful retry replaces an earlier failure. A line cut off
+    by a killed process is skipped, so its row runs again."""
     if not path.exists():
         return []
     latest: dict[str, dict[str, Any]] = {}
     with path.open(encoding="utf-8") as f:
         for line in f:
-            rec = json.loads(line)
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                print(f"skipping a truncated line in {path}", file=sys.stderr)
+                continue
             latest[rec["id"]] = rec
     return list(latest.values())
 
@@ -41,6 +47,8 @@ async def run_guard(
     failed = 0
 
     with out.open("a", encoding="utf-8") as f:
+        if out.stat().st_size and not out.read_bytes().endswith(b"\n"):
+            f.write("\n")  # end a line cut off by a killed process
 
         async def one(row: Row) -> None:
             nonlocal failed

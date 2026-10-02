@@ -85,3 +85,13 @@ def test_coverage_counts_only_rows_outside_the_unsure_band():
     assert s["coverage"] == 0.5
     assert s["f1_sure"] == 1.0
     assert s["f1"] < 1.0
+
+
+async def test_resume_skips_a_line_cut_off_by_a_killed_process(tmp_path: Path):
+    out = tmp_path / "g.jsonl"
+    await run_guard(ScriptedGuard("g"), ROWS[:5], out)
+    out.write_text(out.read_text() + '{"id": "r5", "tas', encoding="utf-8")
+
+    assert len(read_results(out)) == 5
+    assert await run_guard(ScriptedGuard("g"), ROWS, out) == (15, 0)
+    assert len(read_results(out)) == 20
