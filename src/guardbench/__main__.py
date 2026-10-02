@@ -20,8 +20,9 @@ def cmd_run(args: argparse.Namespace) -> None:
     if cfg.manifest:
         freeze_or_verify(cfg.manifest, rows)
     for name in names:
-        guard = build_guard(name, cfg.guards)
         for conc in cfg.concurrency:
+            # A fresh guard per asyncio.run: SDK clients are bound to the loop they started on.
+            guard = build_guard(name, cfg.guards)
             out = results_path(cfg.results_dir, name, conc)
             ran, failed = asyncio.run(run_guard(guard, rows, out, conc))
             print(f"{name} c={conc}: ran {ran}, failed {failed} -> {out}")
