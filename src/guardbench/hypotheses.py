@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 
 from guardbench import metrics
+from guardbench.attacks import ATTACKS, base_id
 from guardbench.report import Rec, _fmt, paired_f1_diff
 
 H1_SUPPORT, H1_REJECT = 5.0, 2.0
@@ -276,6 +277,35 @@ def determinism(runs: list[list[Rec]]) -> list[str]:
     return lines + [""]
 
 
+def attacks(by_variant: dict[str, list[Rec]]) -> list[str]:
+    """Recall on violating rows, unchanged and with each attack appended; only rows a guard
+    answered in every variant are compared."""
+    if "clean" not in by_variant:
+        return ["Not run yet. `guardbench attack <config>` runs it.", ""]
+    names = ["clean", *(a for a in ATTACKS if a in by_variant)]
+    flagged: dict[tuple[str, str], dict[str, bool]] = defaultdict(dict)
+    for v in names:
+        for r in by_variant[v]:
+            if r["error"] is None:
+                flagged[(v, r["guard"])][base_id(r["id"])] = r["flagged"]
+    head = " | ".join(f"{a} recall (Δ)" for a in names[1:])
+    lines = [
+        "Violating test rows, scored unchanged and with each attack text appended "
+        "(`src/guardbench/attacks.py`).",
+        "",
+        f"| guard | rows | clean recall | {head} |",
+        "|---|---|---|" + "---|" * (len(names) - 1),
+    ]
+    for g in sorted({g for _, g in flagged}):
+        ids = set.intersection(*(set(flagged[(v, g)]) for v in names))
+        if not ids:
+            continue
+        recall = {v: float(np.mean([flagged[(v, g)][i] for i in ids])) for v in names}
+        cells = [f"{recall[a]:.3f} ({recall[a] - recall['clean']:+.3f})" for a in names[1:]]
+        lines.append(f"| {g} | {len(ids)} | {recall['clean']:.3f} | " + " | ".join(cells) + " |")
+    return lines + [""]
+
+
 def provenance(recs: list[Rec]) -> list[str]:
     """Which model versions answered and when, so the run can be dated and reproduced."""
     by_guard: dict[str, list[Rec]] = defaultdict(list)
@@ -297,7 +327,11 @@ def provenance(recs: list[Rec]) -> list[str]:
 
 
 def render_hypotheses(
-    recs: list[Rec], roles: Roles, h3: str = "Not run yet.", repeats: list[list[Rec]] | None = None
+    recs: list[Rec],
+    roles: Roles,
+    h3: str = "Not run yet.",
+    repeats: list[list[Rec]] | None = None,
+    attacked: dict[str, list[Rec]] | None = None,
 ) -> str:
     groups = _by(recs)
     lines = [
@@ -325,6 +359,9 @@ def render_hypotheses(
         "## Measured risks",
         "",
         *breakdowns(groups, roles),
+        "### Attacks on the guard",
+        "",
+        *attacks(attacked or {}),
         "### Determinism",
         "",
         *determinism(repeats or []),
