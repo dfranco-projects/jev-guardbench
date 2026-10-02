@@ -1,4 +1,4 @@
-from guardbench.hypotheses import Roles, h1, h2, render_hypotheses, tuned_threshold
+from guardbench.hypotheses import Roles, determinism, h1, h2, render_hypotheses, tuned_threshold
 
 ROLES = Roles(system_one="s1", decomposed=None, judges=["j"], cascade=None)
 
@@ -104,3 +104,13 @@ def test_roles_are_read_from_the_config():
 def test_render_runs_on_a_full_set():
     text = render_hypotheses(latency_recs(10, 60) + quality_recs(200), ROLES)
     assert "## H1 latency" in text and "## Provenance" in text
+
+
+def test_determinism_counts_flips_and_probability_drift():
+    runs = [
+        [rec("s1", 0, label=True, flagged=True, prob=0.9), rec("j", 0, label=True, flagged=True)],
+        [rec("s1", 0, label=True, flagged=True, prob=0.7), rec("j", 0, label=True, flagged=False)],
+    ]
+    lines = determinism(runs)
+    assert "| j | 1 | 1.000 | – | – |" in lines
+    assert "| s1 | 1 | 0.000 | 0.200 | 0.200 |" in lines

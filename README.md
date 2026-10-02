@@ -32,6 +32,7 @@ cp .envrc.example .envrc && $EDITOR .envrc && direnv allow   # credentials
 
 uv run python -m guardbench freeze configs/full.yaml          # downloads data, checks it against the manifest
 uv run python -m guardbench run configs/full.yaml             # resumable; failed rows retry on the next run
+uv run python -m guardbench repeat configs/full.yaml          # determinism: 3 runs on 200 test rows
 uv run python examples/adk_latency.py configs/full.yaml \
   --guards jev,gemini-flash,claude-haiku --messages 100 --out results/full/h3.md
 uv run python -m guardbench report --results results/full --config configs/full.yaml

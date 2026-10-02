@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 
 from guardbench.config import build_guard, freeze_or_verify, load_config, load_rows
+from guardbench.data import sample, split_of
 from guardbench.hypotheses import Roles, render_hypotheses
 from guardbench.report import load_all, render
 from guardbench.runner import results_path, run_guard
@@ -24,6 +25,21 @@ def cmd_run(args: argparse.Namespace) -> None:
             print(f"{name} c={conc}: ran {ran}, failed {failed} -> {out}")
 
 
+def cmd_repeat(args: argparse.Namespace) -> None:
+    """Determinism check: score the same test rows several times with every non-cascade guard."""
+    cfg = load_config(args.config)
+    rows = load_rows(cfg)
+    if cfg.manifest:
+        freeze_or_verify(cfg.manifest, rows)
+    picked = sample([r for r in rows if split_of(r.id) == "test"], args.rows, cfg.seed)
+    names = [n for n in cfg.run if cfg.guards[n]["type"] != "cascade"]
+    for k in range(1, args.times + 1):
+        for name in names:
+            out = results_path(cfg.results_dir / "repeat" / f"r{k}", name, 1)
+            ran, failed = asyncio.run(run_guard(build_guard(name, cfg.guards), picked, out, 1))
+            print(f"run {k} {name}: ran {ran}, failed {failed} -> {out}")
+
+
 def cmd_freeze(args: argparse.Namespace) -> None:
     cfg = load_config(args.config)
     if not cfg.manifest:
@@ -41,7 +57,8 @@ def cmd_report(args: argparse.Namespace) -> None:
         h3 = args.results / "h3.md"
         roles = Roles.from_guards(cfg.guards, cfg.run)
         h3_text = h3.read_text(encoding="utf-8") if h3.exists() else "Not run yet."
-        text = render_hypotheses(recs, roles, h3_text) + "\n\n" + text
+        repeats = [load_all(d) for d in sorted((args.results / "repeat").glob("r*"))]
+        text = render_hypotheses(recs, roles, h3_text, repeats) + "\n\n" + text
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(text, encoding="utf-8")
     print(text)
@@ -55,6 +72,12 @@ def main() -> None:
     run.add_argument("config", type=Path)
     run.add_argument("--guards", help="comma-separated guard names (default: config `run`)")
     run.set_defaults(func=cmd_run)
+
+    repeat = sub.add_parser("repeat", help="score the same test rows several times")
+    repeat.add_argument("config", type=Path)
+    repeat.add_argument("--rows", type=int, default=200)
+    repeat.add_argument("--times", type=int, default=3)
+    repeat.set_defaults(func=cmd_repeat)
 
     freeze = sub.add_parser("freeze", help="write the config's row manifest, or verify it")
     freeze.add_argument("config", type=Path)

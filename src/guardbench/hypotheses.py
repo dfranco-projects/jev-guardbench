@@ -242,6 +242,40 @@ def breakdowns(groups: dict[tuple[str, int, str], list[Rec]], roles: Roles) -> l
     return lines + [""]
 
 
+def determinism(runs: list[list[Rec]]) -> list[str]:
+    """Repeated runs on the same rows: how often the decision flips, and how far System One
+    probabilities move. Only rows every run answered are compared."""
+    if len(runs) < 2:
+        return ["Not run yet. `guardbench repeat <config>` runs it.", ""]
+    by_guard: dict[str, list[dict[str, Rec]]] = defaultdict(list)
+    for run in runs:
+        per_guard: dict[str, dict[str, Rec]] = defaultdict(dict)
+        for r in run:
+            if r["error"] is None:
+                per_guard[r["guard"]][r["id"]] = r
+        for g, rows in per_guard.items():
+            by_guard[g].append(rows)
+    lines = [
+        f"{len(runs)} runs on the same test rows, concurrency 1.",
+        "",
+        "| guard | rows | flip rate | mean prob range | max prob range |",
+        "|---|---|---|---|---|",
+    ]
+    for g, rows in sorted(by_guard.items()):
+        ids = set.intersection(*(set(r) for r in rows)) if len(rows) == len(runs) else set()
+        if not ids:
+            continue
+        flips = sum(len({rs[i]["flagged"] for rs in rows}) > 1 for i in ids) / len(ids)
+        probs = [[rs[i]["prob"] for rs in rows] for i in ids]
+        if all(p is not None for ps in probs for p in ps):
+            ranges = [max(ps) - min(ps) for ps in probs]
+            drift = f"{np.mean(ranges):.3f} | {max(ranges):.3f}"
+        else:
+            drift = "– | –"
+        lines.append(f"| {g} | {len(ids)} | {flips:.3f} | {drift} |")
+    return lines + [""]
+
+
 def provenance(recs: list[Rec]) -> list[str]:
     """Which model versions answered and when, so the run can be dated and reproduced."""
     by_guard: dict[str, list[Rec]] = defaultdict(list)
@@ -262,7 +296,9 @@ def provenance(recs: list[Rec]) -> list[str]:
     return lines + [""]
 
 
-def render_hypotheses(recs: list[Rec], roles: Roles, h3: str = "Not run yet.") -> str:
+def render_hypotheses(
+    recs: list[Rec], roles: Roles, h3: str = "Not run yet.", repeats: list[list[Rec]] | None = None
+) -> str:
     groups = _by(recs)
     lines = [
         "# Pre-registered hypotheses",
@@ -289,6 +325,9 @@ def render_hypotheses(recs: list[Rec], roles: Roles, h3: str = "Not run yet.") -
         "## Measured risks",
         "",
         *breakdowns(groups, roles),
+        "### Determinism",
+        "",
+        *determinism(repeats or []),
         "## Provenance",
         "",
         *provenance(recs),
