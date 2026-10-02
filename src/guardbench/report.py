@@ -121,7 +121,9 @@ def render(recs: list[Rec], baseline: str | None = None) -> str:
             if t != task:
                 continue
             s = summarise(group)
-            cells = [guard, str(conc)] + [_fmt(s.get(key)) for _, key in cols[2:]]
+            cells = [guard, str(conc)] + [
+                _fmt(s.get(key), 0 if key.endswith("_ms") else 3) for _, key in cols[2:]
+            ]
             lines.append("| " + " | ".join(cells) + " |")
         lines.append("")
 

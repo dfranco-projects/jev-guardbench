@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 
 from guardbench.config import build_guard, freeze_or_verify, load_config, load_rows
+from guardbench.hypotheses import Roles, render_hypotheses
 from guardbench.report import load_all, render
 from guardbench.runner import results_path, run_guard
 
@@ -33,7 +34,14 @@ def cmd_freeze(args: argparse.Namespace) -> None:
 
 
 def cmd_report(args: argparse.Namespace) -> None:
-    text = render(load_all(args.results), baseline=args.baseline)
+    recs = load_all(args.results)
+    text = render(recs, baseline=args.baseline)
+    if args.config:
+        cfg = load_config(args.config)
+        h3 = args.results / "h3.md"
+        roles = Roles.from_guards(cfg.guards, cfg.run)
+        h3_text = h3.read_text(encoding="utf-8") if h3.exists() else "Not run yet."
+        text = render_hypotheses(recs, roles, h3_text) + "\n\n" + text
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(text, encoding="utf-8")
     print(text)
@@ -55,6 +63,7 @@ def main() -> None:
     report = sub.add_parser("report", help="render results as markdown")
     report.add_argument("--results", type=Path, default=Path("results"))
     report.add_argument("--baseline", help="guard to compare every other guard against")
+    report.add_argument("--config", type=Path, help="run config; adds the hypothesis verdicts")
     report.add_argument("--out", type=Path, default=Path("reports") / f"{date.today()}.md")
     report.set_defaults(func=cmd_report)
 
