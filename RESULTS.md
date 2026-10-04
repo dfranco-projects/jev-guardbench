@@ -1,6 +1,8 @@
 # Results
 
-**Short answer:** Jev is about 3× faster than the fastest LLM judge, and 10–25× cheaper. It matches the judges on PII and prompt injection, but it misses more harmful content. Under the rules we fixed in advance, it is **not a drop-in replacement** for an LLM judge. It is a strong choice for some checks.
+**Short answer:** Jev is about 3× faster than the fastest LLM judge, and 10–25× cheaper. It matches the best judge on PII and prompt injection, and trails it on harmful content. Under the strict rules we fixed in advance, that means it is **not a drop-in replacement for the best judge**.
+
+Against Gemini 3.6 Flash alone, though, Jev is as accurate or better on three of the four checks, at about a fifth of the time. Our take: for many agents that trade is worth making, especially with another safety layer alongside it (see [Our take](#our-take)).
 
 Counted run: 2–3 October 2026. All numbers are from the test split unless stated. The full tables are in [`results/full/report.md`](results/full/report.md), and every scored row is in `results/full/`.
 
@@ -40,6 +42,19 @@ To pass, a check needed the bottom of its interval above −0.02. Only PII made 
 
 **Can a better threshold fix it?** Jev returns a probability from 0 to 1, and you choose the cut-off (default 0.5). Tuning it on the dev split for best F1 pushed harmful content down to about 0.05. There, Jev beats the judges on harmful responses (0.83) and PII (0.95), but blocks **27% of safe prompts** that only sound dangerous ("how do I kill someone in Call of Duty?"), which fails the over-blocking rule. Values in between were not tested; a better balance may exist.
 
+### Jev against Gemini alone (exploratory)
+
+The pre-registered test compares Jev with the *best* judge for each check. Many teams use one judge everywhere, so here is Jev against Gemini 3.6 Flash on the same rows. This comparison was not pre-registered.
+
+| Check | Jev | Gemini | Difference (95% interval) |
+|---|---|---|---|
+| PII | 0.93 | 0.90 | **+0.033** (+0.015 to +0.049) |
+| Prompt injection | 0.61 | 0.61 | +0.001 (−0.024 to +0.024) |
+| Harmful request | 0.75 | 0.79 | −0.038 (−0.059 to −0.018) |
+| Harmful response | 0.67 | 0.61 | **+0.059** (+0.033 to +0.085) |
+
+Jev is better on PII and harmful responses, level on prompt injection, and a little behind on harmful requests.
+
 ## Cost
 
 | Guard | Cost per 1,000 checks |
@@ -55,12 +70,22 @@ To pass, a check needed the bottom of its interval above −0.02. Only PII made 
 - **Long inputs:** every guard gets much worse above 2,000 characters. Jev's F1 drops from 0.76 to 0.44; the judges drop about as much.
 - **Languages:** Jev's PII F1 stays between 0.89 and 0.97 across all 8 languages.
 
-## What we would tell a team
+## Our take
 
-- **Use Jev for PII checks.** As accurate as the judges, about 3× faster, a fraction of the cost.
-- **Use Jev for prompt injection if a judge is your alternative.** Equal accuracy. But no guard was good at this check, so don't rely on any of them alone.
-- **Keep a judge for harmful content,** or tune Jev's threshold per check and accept more false alarms.
-- **The cascade did not help here.** It escalated 10–26% of rows to Gemini, which is the weaker judge on harmful responses. A cascade into Haiku might do better; we did not test it.
+This part is opinion, not a pre-registered result.
+
+Jev did not pass the strict bar, because the bar was "as good as the best judge on every check". In practice, it could replace the judge in many agents:
+
+- **The trade is lopsided.** Each check takes about 250 ms instead of 0.7–1.2 s, and costs a fraction of a cent per thousand. Accuracy is equal or close on most checks.
+- **Against a Gemini Flash judge, it holds up already.** Better on two checks, level on one, slightly behind on one.
+- **The weak spot is narrow.** Harmful content is where Haiku stays ahead. That can be covered by another layer, for example the safety settings Gemini models have built in, running alongside Jev in the callbacks. We have not tested that combination.
+- **Jev is new.** This is version 1.13; the harmful-content results may move with later releases.
+
+Where we would still be careful:
+
+- **Prompt injection:** no guard did well, so don't rely on any single one.
+- **Threshold tuning:** pushed too far, Jev blocks safe questions. Values between 0.05 and 0.5 were not tested.
+- **The cascade did not help here.** It escalated 10–26% of rows to Gemini, the weaker judge on harmful responses. A cascade into Haiku might do better; we did not test it.
 
 ## Read this before quoting the numbers
 
@@ -69,7 +94,7 @@ To pass, a check needed the bottom of its interval above −0.02. Only PII made 
 - **One rule needed interpreting.** We applied the XSTest over-blocking check to every check, against each check's best judge. That choice was written down before the results. Under the other reading, the tuned-threshold result is still "not supported" (2 of 4 checks pass).
 - **Not done:** the pre-registered no-op round trip to each provider, and the `prompt_leakage` check, which has no data.
 - **Network:** measured from a laptop in Western Europe. Gemini ran on Vertex AI (`global`), the other two on their own APIs.
-- **Exploratory, not pre-registered:** the cost comparison, the threshold discussion and the recommendations above.
+- **Exploratory, not pre-registered:** the Jev-vs-Gemini comparison, the cost comparison, the threshold discussion and "Our take".
 
 ## What we would do differently
 

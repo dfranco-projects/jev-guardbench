@@ -6,7 +6,7 @@ This repo tests whether TypeSafe's [Jev](https://typesafe.ai/blog/introducing-sy
 
 ## The answer
 
-**Jev is about 3× faster and 10–25× cheaper than the judges. It is as accurate on PII and prompt injection, but misses more harmful content.** So it is not a drop-in replacement, but it is a strong choice for some checks.
+**Jev is about 3× faster and 10–25× cheaper than the judges.** It matches the best judge on PII and prompt injection and trails it on harmful content, so it misses the strict bar we set in advance. Against a Gemini Flash judge it is as good or better on three of four checks, and for many agents we think the speed and cost are worth the trade.
 
 ![Time per guardrail check: Jev 250 ms, Claude Haiku 672 ms, Gemini 1,189 ms](docs/figures/latency.png)
 
