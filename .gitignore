@@ -9,7 +9,10 @@ wheels/
 # Virtual environments
 .venv
 
-# benchmark outputs
-results/
+# benchmark outputs: only the counted run is published, without logs or local scripts
+results/*
+!results/full/
+results/full/*.log
+results/full/*.sh
 .env
 .envrc
