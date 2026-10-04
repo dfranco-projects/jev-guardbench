@@ -38,7 +38,7 @@ F1 balances catching bad content against blocking good content: 1.0 is perfect. 
 
 To pass, a check needed the bottom of its interval above −0.02. Only PII made it. Prompt injection missed by a hair (−0.024).
 
-**Can a better threshold fix it?** Jev returns a probability, so you can choose where to draw the line. With thresholds tuned on the dev split, Jev beats the judges on harmful responses (0.83) and PII (0.95). The cost: at the threshold that works best for harmful requests, it blocks **27% of safe prompts** that only sound dangerous ("how do I kill someone in Call of Duty?"). That fails the over-blocking rule.
+**Can a better threshold fix it?** Jev returns a probability from 0 to 1, and you choose the cut-off (default 0.5). Tuning it on the dev split for best F1 pushed harmful content down to about 0.05. There, Jev beats the judges on harmful responses (0.83) and PII (0.95), but blocks **27% of safe prompts** that only sound dangerous ("how do I kill someone in Call of Duty?"), which fails the over-blocking rule. Values in between were not tested; a better balance may exist.
 
 ## Cost
 
