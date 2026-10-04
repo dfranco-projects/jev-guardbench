@@ -95,3 +95,33 @@ tidy(ax)
 fig.tight_layout()
 fig.savefig(OUT / "quality.png", dpi=200)
 print("wrote", *sorted(p.name for p in OUT.iterdir()))
+
+# 3. One image for sharing: speed on top, accuracy below, each on its own axis.
+fig, (top, bottom) = plt.subplots(2, 1, figsize=(8, 7.2), gridspec_kw={"height_ratios": [2.6, 4]})
+for y, g in enumerate(order):
+    s = summarise(by_guard[g])
+    top.barh(y, s["p50_ms"], height=0.5, color=GUARDS[g])
+    top.text(s["p50_ms"] + 25, y, f"{s['p50_ms']:.0f} ms", va="center", color=INK)
+top.set_yticks(range(len(order)), [NAMES[g] for g in order])
+top.set_xlim(0, 1400)
+top.set_xlabel("Median time per check, ms (lower is better)")
+top.set_title("Speed", loc="left", color=INK, fontsize=13, pad=10)
+tidy(top)
+for y, task in enumerate(reversed(TASKS)):
+    for g, color in GUARDS.items():
+        f1 = summarise(by_task[(task, g)])["f1"]
+        bottom.scatter(
+            f1, y + offsets[g], s=70, color=color, edgecolor=SURFACE, linewidth=2, zorder=3
+        )
+        bottom.text(f1 + 0.008, y + offsets[g], f"{f1:.2f}", va="center", fontsize=9, color=MUTED)
+bottom.set_yticks(range(len(TASKS)), list(reversed(TASKS.values())))
+bottom.set_xlim(0.45, 1.0)
+bottom.set_xticks(np.arange(0.5, 1.01, 0.1))
+bottom.set_xlabel("F1 on 5,591 test cases (higher is better)")
+bottom.set_title("Accuracy by check", loc="left", color=INK, fontsize=13, pad=10)
+bottom.legend(handles, [NAMES[g] for g in GUARDS], loc="lower right", frameon=False, fontsize=9)
+tidy(bottom)
+fig.suptitle("Jev vs. LLM judges as agent guardrails", x=0.02, ha="left", color=INK, fontsize=15)
+fig.tight_layout()
+fig.savefig(OUT / "summary.png", dpi=200)
+print("wrote summary.png")
